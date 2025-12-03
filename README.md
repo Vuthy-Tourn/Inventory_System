@@ -1,4 +1,4 @@
-# PostgreSQL Database Manager
+# Inventory Management
 
 ## 📈 Roadmap
 

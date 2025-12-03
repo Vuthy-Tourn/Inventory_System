@@ -147,13 +147,6 @@ function showEmployeeModal(employee = null) {
     const content = `
         <form id="modalForm" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Full Name *</label>
-                    <input type="text" name="empname" required 
-                           class="form-input"
-                           value="${employee ? employee.empname : ''}"
-                           placeholder="John Doe">
-                </div>
                 
                 <div class="form-group">
                     <label class="form-label">Gender *</label>
@@ -168,7 +161,7 @@ function showEmployeeModal(employee = null) {
                     <label class="form-label">Date of Birth *</label>
                     <input type="date" name="dob" required 
                            class="form-input"
-                           value="${employee ? employee.dob : ''}">
+                           value="${employee ? employee.dob.toISOString().split('T')[0] : ''}">
                 </div>
                 
                 <div class="form-group">
@@ -206,8 +199,9 @@ function showEmployeeModal(employee = null) {
                     <label class="form-label">Hired Date *</label>
                     <input type="date" name="hired_date" required 
                            class="form-input"
-                           value="${employee ? employee.hired_date : ''}">
+                           value="${employee ? employee.hired_date.toISOString().split('T')[0] : ''}">
                 </div>
+                
             </div>
             
             <div class="form-group">
@@ -220,7 +214,6 @@ function showEmployeeModal(employee = null) {
             </div>
         </form>
     `;
-    
     const modal = createModal(title, content, true);
     
     const form = modal.querySelector('#modalForm');
