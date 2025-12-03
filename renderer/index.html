@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-database text-2xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Inventory Management</h1>
+                        <p class="text-blue-100 text-sm mt-1">Manage your inventory effectively</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-6">
+                        <div class="text-right">
+                            <div class="text-sm text-blue-200">Database Status</div>
+                            <div id="db-status" class="flex items-center text-sm">
+                                <span class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+                                <span>Connecting...</span>
+                            </div>
+                        </div>
+                        <div class="h-6 w-px bg-blue-500"></div>
+                        <button class="btn btn-secondary" onclick="refreshAll()">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-sm mb-8">
+            <div class="flex overflow-x-auto">
+                <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                </button>
+                <button class="tab" onclick="showTab('employees')" id="tab-employees">
+                    <i class="fas fa-users mr-2"></i>Employees
+                </button>
+                <button class="tab" onclick="showTab('customers')" id="tab-customers">
+                    <i class="fas fa-user-tie mr-2"></i>Customers
+                </button>
+                <button class="tab" onclick="showTab('products')" id="tab-products">
+                    <i class="fas fa-boxes mr-2"></i>Products
+                </button>
+                <button class="tab" onclick="showTab('sales')" id="tab-sales">
+                    <i class="fas fa-shopping-cart mr-2"></i>Sales
+                </button>
+                <button class="tab" onclick="showTab('imports')" id="tab-imports">
+                    <i class="fas fa-truck-loading mr-2"></i>Imports
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Statistics Cards -->
+                <div class="card hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total Employees</p>
+                            <h3 id="total-employees" class="text-3xl font-bold text-gray-800 mt-2">0</h3>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-users text-blue-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center text-sm text-green-600">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span>Updated just now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total Customers</p>
+                            <h3 id="total-customers" class="text-3xl font-bold text-gray-800 mt-2">0</h3>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-user-tie text-green-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center text-sm text-green-600">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span>Updated just now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total Products</p>
+                            <h3 id="total-products" class="text-3xl font-bold text-gray-800 mt-2">0</h3>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <i class="fas fa-boxes text-purple-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center text-sm text-green-600">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span>Updated just now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Today's Sales</p>
+                            <h3 id="today-sales" class="text-3xl font-bold text-gray-800 mt-2">$0.00</h3>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full">
+                            <i class="fas fa-shopping-cart text-red-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center text-sm text-green-600">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span>Updated just now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="showEmployeeModal()" class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                        <i class="fas fa-user-plus text-blue-600 text-2xl mr-4"></i>
+                        <div class="text-left">
+                            <div class="font-medium text-gray-800">Add Employee</div>
+                            <div class="text-sm text-gray-600">Create new employee record</div>
+                        </div>
+                    </button>
+                    <button onclick="showProductModal()" class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                        <i class="fas fa-box text-green-600 text-2xl mr-4"></i>
+                        <div class="text-left">
+                            <div class="font-medium text-gray-800">Add Product</div>
+                            <div class="text-sm text-gray-600">Add new product to inventory</div>
+                        </div>
+                    </button>
+                    <button onclick="showSaleModal()" class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                        <i class="fas fa-cash-register text-purple-600 text-2xl mr-4"></i>
+                        <div class="text-left">
+                            <div class="font-medium text-gray-800">New Sale</div>
+                            <div class="text-sm text-gray-600">Create sales transaction</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
+                    <button onclick="refreshAll()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+                <div id="recent-activity" class="space-y-3">
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                        <span class="text-gray-700">Welcome to Inventory Management</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Tab -->
+        <div id="employees" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Employee Management</h2>
+                    <p class="text-gray-600">Manage employee records and information</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="search-employee" placeholder="Search employees..." 
+                               class="form-input search-input" 
+                               onkeyup="searchEmployees()">
+                    </div>
+                    <button onclick="loadEmployees()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showEmployeeModal()" class="btn btn-success">
+                        <i class="fas fa-plus mr-2"></i>Add Employee
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="table-cell text-left font-semibold">ID</th>
+                                <th class="table-cell text-left font-semibold">Name</th>
+                                <th class="table-cell text-left font-semibold">Gender</th>
+                                <th class="table-cell text-left font-semibold">Position</th>
+                                <th class="table-cell text-left font-semibold">Salary</th>
+                                <th class="table-cell text-left font-semibold">Hired Date</th>
+                                <th class="table-cell text-left font-semibold">Status</th>
+                                <th class="table-cell text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table">
+                            <tr>
+                                <td colspan="8" class="table-cell text-center py-12">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
+                                        <p class="text-gray-600">Loading employees...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Tab (similar structure) -->
+        <div id="customers" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Customer Management</h2>
+                    <p class="text-gray-600">Manage customer records and information</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadCustomers()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showCustomerModal()" class="btn btn-success">
+                        <i class="fas fa-plus mr-2"></i>Add Customer
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="table-cell text-left font-semibold">ID</th>
+                                <th class="table-cell text-left font-semibold">Name</th>
+                                <th class="table-cell text-left font-semibold">Gender</th>
+                                <th class="table-cell text-left font-semibold">Contact</th>
+                                <th class="table-cell text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-table">
+                            <tr>
+                                <td colspan="5" class="table-cell text-center py-12">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
+                                        <p class="text-gray-600">Loading customers...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Tab (similar structure) -->
+        <div id="products" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Product Management</h2>
+                    <p class="text-gray-600">Manage product inventory and pricing</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadProducts()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showProductModal()" class="btn btn-success">
+                        <i class="fas fa-plus mr-2"></i>Add Product
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="table-cell text-left font-semibold">ID</th>
+                                <th class="table-cell text-left font-semibold">Name</th>
+                                <th class="table-cell text-left font-semibold">Quantity</th>
+                                <th class="table-cell text-left font-semibold">Price</th>
+                                <th class="table-cell text-left font-semibold">Supplier Price</th>
+                                <th class="table-cell text-left font-semibold">Category</th>
+                                <th class="table-cell text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table">
+                            <tr>
+                                <td colspan="7" class="table-cell text-center py-12">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
+                                        <p class="text-gray-600">Loading products...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Tab -->
+        <div id="sales" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Sales Management</h2>
+                    <p class="text-gray-600">View and manage sales transactions</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadSales()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showSaleModal()" class="btn btn-success">
+                        <i class="fas fa-plus mr-2"></i>New Sale
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="table-cell text-left font-semibold">ID</th>
+                                <th class="table-cell text-left font-semibold">Date</th>
+                                <th class="table-cell text-left font-semibold">Employee</th>
+                                <th class="table-cell text-left font-semibold">Customer</th>
+                                <th class="table-cell text-left font-semibold">Total</th>
+                                <th class="table-cell text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table">
+                            <tr>
+                                <td colspan="6" class="table-cell text-center py-12">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
+                                        <p class="text-gray-600">Loading sales...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Imports Tab -->
+        <div id="imports" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Import Management</h2>
+                    <p class="text-gray-600">Manage product imports and suppliers</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadImports()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showImportModal()" class="btn btn-success">
+                        <i class="fas fa-plus mr-2"></i>New Import
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="table-cell text-left font-semibold">ID</th>
+                                <th class="table-cell text-left font-semibold">Date</th>
+                                <th class="table-cell text-left font-semibold">Supplier</th>
+                                <th class="table-cell text-left font-semibold">Employee</th>
+                                <th class="table-cell text-left font-semibold">Total</th>
+                                <th class="table-cell text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="imports-table">
+                            <tr>
+                                <td colspan="6" class="table-cell text-center py-12">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
+                                        <p class="text-gray-600">Loading imports...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-3"></div>
+
+    <!-- Scripts -->
+    <script src="./index.js"></script>
+    <script>
+        // Global modal management
+        let activeModal = null;
+
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab').forEach(tabBtn => {
+                tabBtn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab button
+            event.target.classList.add('active');
+            
+            // Load data for the selected tab
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'employees':
+                    loadEmployees();
+                    break;
+                case 'customers':
+                    loadCustomers();
+                    break;
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'sales':
+                    loadSales();
+                    break;
+                case 'imports':
+                    loadImports();
+                    break;
+            }
+        }
+
+        // Close modal function
+        function closeModal() {
+            if (activeModal) {
+                activeModal.remove();
+                activeModal = null;
+            }
+        }
+
+        // Close modal when clicking outside
+        function setupModalClickOutside(modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+            
+            toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center transform transition-transform duration-300 translate-x-full`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]} mr-3"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 10);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Refresh all data
+        function refreshAll() {
+            showToast('Refreshing all data...', 'info');
+            const currentTab = document.querySelector('.tab.active');
+            if (currentTab) {
+                const tabName = currentTab.id.replace('tab-', '');
+                showTab(tabName);
+            }
+        }
+
+        // Check database connection
+        async function checkDatabaseConnection() {
+            const statusElement = document.getElementById('db-status');
+            try {
+                // Try to get a simple query to test connection
+                await window.api.getAllEmployees();
+                statusElement.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                    <span>Connected</span>
+                `;
+                statusElement.className = 'flex items-center text-sm text-green-300';
+            } catch (error) {
+                statusElement.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                    <span>Disconnected</span>
+                `;
+                statusElement.className = 'flex items-center text-sm text-red-300';
+                showToast('Database connection failed!', 'error');
+            }
+        }
+
+        // Set dashboard as active on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check connection
+            setTimeout(checkDatabaseConnection, 1000);
+            
+            // Set dashboard as active
+            showTab('dashboard');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && activeModal) {
+                closeModal();
+            }
+            
+            // Ctrl/Cmd + R to refresh
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshAll();
+            }
+        });
+    </script>
+</body>
+</html>
