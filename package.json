@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electronmon ."
   },
   "dependencies": {
     "dotenv": "^17.2.3",
     "electron": "^31.0.0",
     "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "electron-reload": "^2.0.0-alpha.1",
+    "electronmon": "^2.0.4"
   }
 }

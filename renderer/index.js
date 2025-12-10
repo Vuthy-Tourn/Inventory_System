@@ -44,238 +44,6 @@ function createModal(title, content, onSubmit = null) {
     return modal;
 }
 
-// Employees
-async function loadEmployees() {
-    try {
-        const table = document.getElementById('employees-table');
-        table.innerHTML = `
-            <tr>
-                <td colspan="8" class="table-cell text-center py-12">
-                    <div class="flex flex-col items-center">
-                        <i class="fas fa-spinner loading-spinner text-3xl text-blue-500 mb-4"></i>
-                        <p class="text-gray-600">Loading employees...</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        
-        const employees = await window.api.getAllEmployees();
-        
-        if (employees.length === 0) {
-            table.innerHTML = `
-                <tr>
-                    <td colspan="8" class="table-cell text-center py-12">
-                        <div class="empty-state">
-                            <i class="fas fa-users-slash empty-state-icon"></i>
-                            <p class="text-gray-600">No employees found</p>
-                            <button onclick="showEmployeeModal()" class="btn btn-primary mt-4">
-                                <i class="fas fa-plus mr-2"></i>Add First Employee
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        table.innerHTML = '';
-        
-        employees.forEach(emp => {
-            const row = document.createElement('tr');
-            row.className = 'table-row';
-            row.innerHTML = `
-                <td class="table-cell font-medium">${emp.empid}</td>
-                <td class="table-cell font-medium">${emp.empname}</td>
-                <td class="table-cell">${emp.empgender === 'M' ? 'Male' : 'Female'}</td>
-                <td class="table-cell">${emp.position}</td>
-                <td class="table-cell font-medium">$${parseFloat(emp.salary).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td class="table-cell">${new Date(emp.hired_date).toLocaleDateString()}</td>
-                <td class="table-cell">
-                    <span class="status-badge ${emp.stopwork ? 'status-inactive' : 'status-active'}">
-                        <i class="fas ${emp.stopwork ? 'fa-user-slash' : 'fa-user-check'} mr-1"></i>
-                        ${emp.stopwork ? 'Inactive' : 'Active'}
-                    </span>
-                </td>
-                <td class="table-cell">
-                    <div class="flex items-center space-x-2">
-                        <button onclick="editEmployee(${emp.empid})" 
-                                class="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                                title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteEmployee(${emp.empid})" 
-                                class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                                title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            table.appendChild(row);
-        });
-        
-    } catch (error) {
-        const table = document.getElementById('employees-table');
-        table.innerHTML = `
-            <tr>
-                <td colspan="8" class="table-cell text-center py-12">
-                    <div class="flex flex-col items-center text-red-600">
-                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-                        <p class="font-medium">Error loading employees</p>
-                        <p class="text-sm text-gray-600 mt-1">${error.message}</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        showToast('Error loading employees', 'error');
-    }
-}
-
-async function searchEmployees() {
-    const searchTerm = document.getElementById('search-employee').value.toLowerCase();
-    const table = document.getElementById('employees-table');
-    const rows = table.querySelectorAll('.table-row');
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchTerm) ? '' : 'none';
-    });
-}
-
-function showEmployeeModal(employee = null) {
-    const title = employee ? 'Edit Employee' : 'Add New Employee';
-    const content = `
-        <form id="modalForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <div class="form-group">
-                    <label class="form-label">Gender *</label>
-                    <select name="empgender" required class="form-select">
-                        <option value="">Select Gender</option>
-                        <option value="M" ${employee && employee.empgender === 'M' ? 'selected' : ''}>Male</option>
-                        <option value="F" ${employee && employee.empgender === 'F' ? 'selected' : ''}>Female</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Date of Birth *</label>
-                    <input type="date" name="dob" required 
-                           class="form-input"
-                           value="${employee ? employee.dob.toISOString().split('T')[0] : ''}">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Position *</label>
-                    <input type="text" name="position" required 
-                           class="form-input"
-                           value="${employee ? employee.position : ''}"
-                           placeholder="Manager">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Salary *</label>
-                    <input type="number" name="salary" step="0.01" required 
-                           class="form-input"
-                           value="${employee ? employee.salary : ''}"
-                           placeholder="50000">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Address *</label>
-                <textarea name="address" required class="form-textarea">${employee ? employee.address : ''}</textarea>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Contact</label>
-                    <input type="text" name="empcontact" 
-                           class="form-input"
-                           value="${employee ? employee.empcontact : ''}"
-                           placeholder="+1 (555) 123-4567">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Hired Date *</label>
-                    <input type="date" name="hired_date" required 
-                           class="form-input"
-                           value="${employee ? employee.hired_date.toISOString().split('T')[0] : ''}">
-                </div>
-                
-            </div>
-            
-            <div class="form-group">
-                <label class="flex items-center">
-                    <input type="checkbox" name="stopwork" 
-                           class="mr-2 h-5 w-5 text-blue-600 rounded"
-                           ${employee && employee.stopwork ? 'checked' : ''}>
-                    <span class="text-gray-700">Stop Work (Inactive)</span>
-                </label>
-            </div>
-        </form>
-    `;
-    const modal = createModal(title, content, true);
-    
-    const form = modal.querySelector('#modalForm');
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData);
-        
-        // Convert checkbox value to boolean
-        data.stopwork = data.stopwork === 'on';
-        
-        // Convert numeric fields
-        data.salary = parseFloat(data.salary);
-        
-        try {
-            const submitBtn = modal.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner loading-spinner mr-2"></i>Saving...';
-            submitBtn.disabled = true;
-            
-            if (employee) {
-                await window.api.updateEmployee(data.empid, data);
-                showToast('Employee updated successfully!', 'success');
-            } else {
-                await window.api.addEmployee(data);
-                showToast('Employee added successfully!', 'success');
-            }
-            
-            closeModal();
-            loadEmployees();
-        } catch (error) {
-            showToast(`Error: ${error.message}`, 'error');
-            const submitBtn = modal.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = 'Save Changes';
-            submitBtn.disabled = false;
-        }
-    });
-}
-
-async function editEmployee(id) {
-    try {
-        const employees = await window.api.getAllEmployees();
-        const employee = employees.find(e => e.empid === id);
-        if (employee) {
-            showEmployeeModal(employee);
-        }
-    } catch (error) {
-        showToast('Error loading employee data', 'error');
-    }
-}
-
-async function deleteEmployee(id) {
-    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
-        try {
-            await window.api.deleteEmployee(id);
-            showToast('Employee deleted successfully!', 'success');
-            loadEmployees();
-        } catch (error) {
-            showToast(`Error: ${error.message}`, 'error');
-        }
-    }
-}
-
 // Dashboard functions
 async function loadDashboard() {
     try {
@@ -557,52 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboard();
 });
 
-// Modal Management System
-function createModal(title, content, onSubmit = null) {
-    // Close existing modal if any
-    if (activeModal) {
-        activeModal.remove();
-    }
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 class="text-xl font-bold text-gray-800">${title}</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
-                    &times;
-                </button>
-            </div>
-            <div class="modal-body">
-                ${content}
-            </div>
-            ${onSubmit ? `
-                <div class="modal-footer">
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                    <button type="submit" form="modalForm" class="btn btn-primary">
-                        Save Changes
-                    </button>
-                </div>
-            ` : ''}
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    activeModal = modal;
-    setupModalClickOutside(modal);
-    
-    // Focus first input
-    setTimeout(() => {
-        const firstInput = modal.querySelector('input, select, textarea');
-        if (firstInput) firstInput.focus();
-    }, 100);
-    
-    return modal;
-}
-
 // Employees
 async function loadEmployees() {
     try {
@@ -703,93 +425,173 @@ async function searchEmployees() {
 
 function showEmployeeModal(employee = null) {
     const title = employee ? 'Edit Employee' : 'Add New Employee';
+    
+    // Add styles once
+    addImageUploadStyles();
+    
+    // Format dates for input fields (YYYY-MM-DD)
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    };
+    
+    // Create image upload component
+    const imageUpload = createImageUploadComponent({
+        existingImage: employee ? employee.photo : '',
+        label: 'Profile Photo'
+    });
+    
     const content = `
-        <form id="modalForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Employee ID *</label>
-                    <input type="text" name="empid" required 
-                           class="form-input"
-                           value="${employee ? employee.empid : ''}"
-                           ${employee ? 'readonly' : ''}
-                           placeholder="E001">
+        <form id="modalForm" class="space-y-6">
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Left Column: Profile Photo & Status -->
+                <div class="md:w-1/3 space-y-4">
+                    ${imageUpload.html}
+                    
+                    <!-- Status Section -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Employment Status</h3>
+                        <label class="flex items-center p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" name="stopwork" 
+                                   class="mr-3 h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                   ${employee && employee.stopwork ? 'checked' : ''}>
+                            <div>
+                                <span class="text-gray-700 font-medium text-sm">Mark as Inactive</span>
+                                <p class="text-xs text-gray-500 mt-1">Employee is no longer working</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Full Name *</label>
-                    <input type="text" name="empname" required 
-                           class="form-input"
-                           value="${employee ? employee.empname : ''}"
-                           placeholder="John Doe">
+                <!-- Right Column: Employee Details -->
+                <div class="md:w-2/3">
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Personal Information</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Full Name</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" name="empname" required 
+                                           class="form-input pl-10"
+                                           value="${employee ? employee.empname : ''}"
+                                           placeholder="John Doe">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Gender</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-venus-mars absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <select name="empgender" required class="form-select pl-10">
+                                        <option value="">Select Gender</option>
+                                        <option value="M" ${employee && employee.empgender === 'M' ? 'selected' : ''}>Male</option>
+                                        <option value="F" ${employee && employee.empgender === 'F' ? 'selected' : ''}>Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Date of Birth</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-calendar-day absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="date" name="dob" required 
+                                           class="form-input pl-10"
+                                           value="${formatDateForInput(employee ? employee.dob : '')}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Position</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-briefcase absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" name="position" required 
+                                           class="form-input pl-10"
+                                           value="${employee ? employee.position : ''}"
+                                           placeholder="Manager">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Salary</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-dollar-sign absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="number" name="salary" step="0.01" required 
+                                           class="form-input pl-10"
+                                           value="${employee ? employee.salary : ''}"
+                                           placeholder="50000.00">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Hired Date</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-calendar-check absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="date" name="hired_date" required 
+                                           class="form-input pl-10"
+                                           value="${formatDateForInput(employee ? employee.hired_date : '')}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <div class="form-group">
+                                <label class="form-label flex items-center">
+                                    <span>Address</span>
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-400"></i>
+                                    <textarea name="address" required class="form-textarea pl-10" rows="3">${employee ? employee.address : ''}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-6">
+                                <label class="form-label flex items-center">
+                                    <span>Contact Number</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" name="empcontact" 
+                                           class="form-input pl-10"
+                                           value="${employee ? employee.empcontact : ''}"
+                                           placeholder="(+855) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Gender *</label>
-                    <select name="empgender" required class="form-select">
-                        <option value="">Select Gender</option>
-                        <option value="M" ${employee && employee.empgender === 'M' ? 'selected' : ''}>Male</option>
-                        <option value="F" ${employee && employee.empgender === 'F' ? 'selected' : ''}>Female</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Date of Birth *</label>
-                    <input type="date" name="dob" required 
-                           class="form-input"
-                           value="${employee ? employee.dob : ''}">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Position *</label>
-                    <input type="text" name="position" required 
-                           class="form-input"
-                           value="${employee ? employee.position : ''}"
-                           placeholder="Manager">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Salary *</label>
-                    <input type="number" name="salary" step="0.01" required 
-                           class="form-input"
-                           value="${employee ? employee.salary : ''}"
-                           placeholder="50000">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Address *</label>
-                <textarea name="address" required class="form-textarea">${employee ? employee.address : ''}</textarea>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Contact</label>
-                    <input type="text" name="empcontact" 
-                           class="form-input"
-                           value="${employee ? employee.empcontact : ''}"
-                           placeholder="+1 (555) 123-4567">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Hired Date *</label>
-                    <input type="date" name="hired_date" required 
-                           class="form-input"
-                           value="${employee ? employee.hired_date : ''}">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="flex items-center">
-                    <input type="checkbox" name="stopwork" 
-                           class="mr-2 h-5 w-5 text-blue-600 rounded"
-                           ${employee && employee.stopwork ? 'checked' : ''}>
-                    <span class="text-gray-700">Stop Work (Inactive)</span>
-                </label>
             </div>
         </form>
     `;
     
     const modal = createModal(title, content, true);
+    
+    // IMPORTANT: Wait for the modal to be fully rendered before setting up
+    setTimeout(() => {
+        // Setup image upload component AFTER the modal is in the DOM
+        imageUpload.setup();
+    }, 0);
     
     const form = modal.querySelector('#modalForm');
     form.addEventListener('submit', async (e) => {
@@ -797,19 +599,30 @@ function showEmployeeModal(employee = null) {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData);
         
+        // Get the photo data from the image upload component
+        data.photo = imageUpload.getImage() || null;
+        
         // Convert checkbox value to boolean
         data.stopwork = data.stopwork === 'on';
         
         // Convert numeric fields
         data.salary = parseFloat(data.salary);
         
+        // Format dates properly before sending
+        if (data.dob) {
+            data.dob = new Date(data.dob).toISOString().split('T')[0];
+        }
+        if (data.hired_date) {
+            data.hired_date = new Date(data.hired_date).toISOString().split('T')[0];
+        }
+        
         try {
             const submitBtn = modal.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner loading-spinner mr-2"></i>Saving...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
             submitBtn.disabled = true;
             
             if (employee) {
-                await window.api.updateEmployee(data.empid, data);
+                await window.api.updateEmployee(employee.empid, data);
                 showToast('Employee updated successfully!', 'success');
             } else {
                 await window.api.addEmployee(data);
@@ -819,6 +632,7 @@ function showEmployeeModal(employee = null) {
             closeModal();
             loadEmployees();
         } catch (error) {
+            console.error('Error saving employee:', error);
             showToast(`Error: ${error.message}`, 'error');
             const submitBtn = modal.querySelector('button[type="submit"]');
             submitBtn.innerHTML = 'Save Changes';
@@ -938,15 +752,6 @@ function showProductModal(product = null) {
         const content = `
             <form id="modalForm" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label">Product ID *</label>
-                        <input type="text" name="proid" required 
-                               class="form-input"
-                               value="${product ? product.proid : ''}"
-                               ${product ? 'readonly' : ''}
-                               placeholder="PROD001">
-                    </div>
-                    
                     <div class="form-group">
                         <label class="form-label">Product Name *</label>
                         <input type="text" name="proname" required 
@@ -1167,7 +972,7 @@ function showSaleModal() {
                 <div class="border-t pt-4">
                     <h4 class="font-medium text-gray-700 mb-3">Sale Items</h4>
                     <div id="sale-items-container">
-                        <div class="sale-item grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="sale-item grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                             <div>
                                 <label class="form-label">Product</label>
                                 <select name="products[]" required class="form-select product-select" onchange="updateProductDetails(this)">
@@ -1529,7 +1334,7 @@ function showImportModal() {
                 <div class="border-t pt-4">
                     <h4 class="font-medium text-gray-700 mb-3">Import Items</h4>
                     <div id="import-items-container">
-                        <div class="import-item grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="import-item grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                             <div>
                                 <label class="form-label">Product ID *</label>
                                 <input type="text" name="productIds[]" required 
@@ -1828,3 +1633,211 @@ async function loadDashboard() {
 document.addEventListener('DOMContentLoaded', () => {
     loadDashboard();
 });
+
+function createImageUploadComponent(options = {}) {
+    const {
+        existingImage = '',
+        label = 'Profile Photo',
+        containerId = `imageUpload_${Date.now()}`
+    } = options;
+    
+    const html = `
+        <div id="${containerId}" class="image-upload-component">
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">${label}</h3>
+                <div class="image-upload-container">
+                    <div class="relative">
+                        <div id="imagePreview_${containerId}" class="image-preview image-preview-circle w-40 h-40 mx-auto ${existingImage ? 'has-image' : ''}">
+                            ${existingImage ? 
+                                `<img src="data:image/jpeg;base64,${existingImage}" alt="Preview" class="preview-image">` : 
+                                `<div class="placeholder">
+                                    <i class="fas fa-user text-4xl text-gray-400"></i>
+                                    <span class="mt-3 text-sm text-gray-500">Upload profile photo</span>
+                                 </div>`
+                            }
+                        </div>
+                        <div class="mt-4 flex flex-col gap-3">
+                            <label for="photoInput_${containerId}" class="upload-btn cursor-pointer bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
+                                <i class="fas fa-cloud-upload-alt mr-2"></i>
+                                ${existingImage ? 'Change Photo' : 'Upload Photo'}
+                            </label>
+                            <input type="file" 
+                                   id="photoInput_${containerId}" 
+                                   accept="image/*" 
+                                   class="hidden">
+                            <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span>JPG, PNG • Max 5MB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="photoBase64_${containerId}" value="${existingImage}">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return {
+        html,
+        containerId,
+        getImage: () => {
+            const element = document.getElementById(`photoBase64_${containerId}`);
+            return element ? element.value : '';
+        },
+        setup: (onImageChange) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const imagePreview = container.querySelector(`#imagePreview_${containerId}`);
+            const photoInput = container.querySelector(`#photoInput_${containerId}`);
+            const photoBase64 = container.querySelector(`#photoBase64_${containerId}`);
+            const uploadBtn = container.querySelector('.upload-btn');
+            
+            // Handle file input change
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('File size must be less than 5MB', 'error');
+                    return;
+                }
+                
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    showToast('Please upload a valid image (JPG, PNG)', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Get base64 string
+                    const base64String = event.target.result.split(',')[1];
+                    photoBase64.value = base64String;
+                    
+                    // Update preview
+                    imagePreview.innerHTML = `
+                        <img src="${event.target.result}" alt="Preview" class="preview-image">
+                    `;
+                    imagePreview.classList.add('has-image');
+                    uploadBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Change Photo';
+                    
+                    // Add remove button event
+                    const removeBtn = container.querySelector(`#removeImageBtn_${containerId}`);
+                    removeBtn.addEventListener('click', function() {
+                        photoBase64.value = '';
+                        imagePreview.innerHTML = `
+                            <div class="placeholder">
+                                <i class="fas fa-user text-4xl text-gray-400"></i>
+                                <span class="mt-3 text-sm text-gray-500">Upload profile photo</span>
+                             </div>
+                        `;
+                        imagePreview.classList.remove('has-image');
+                        uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>Upload Photo';
+                        photoInput.value = '';
+                        if (onImageChange) onImageChange('');
+                    });
+                    
+                    // Call change callback
+                    if (onImageChange) onImageChange(base64String);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+    };
+}
+
+// Add the styles once
+function addImageUploadStyles() {
+    if (document.querySelector('#image-upload-styles')) return;
+    
+    const styles = document.createElement('style');
+    styles.id = 'image-upload-styles';
+    styles.textContent = `
+        .image-upload-component {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .image-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .image-preview {
+            width: 160px;
+            height: 160px;
+            border: 3px dashed #d1d5db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+        }
+        
+        .image-preview:hover {
+            border-color: #9ca3af;
+            transform: scale(1.02);
+        }
+        
+        .image-preview.has-image {
+            border-style: solid;
+            border-color: #3b82f6;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
+        }
+        
+        .image-preview .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+    `;
+    document.head.appendChild(styles);
+}

@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const db = require('./db/database.js');
+require('electron-reload')(__dirname);
 
 let mainWindow;
 
